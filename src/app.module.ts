@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SummaryModule } from './summary/summary.module';
 import { Summary } from './summary/summary.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: '.env/.development.env'
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST,
@@ -17,10 +19,9 @@ import { Summary } from './summary/summary.entity';
       entities: [Summary],
       synchronize: false
     }),
+    
     SummaryModule
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {
 }

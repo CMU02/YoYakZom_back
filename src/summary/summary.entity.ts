@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity()
+@Entity('summary')
 export class Summary {
     @PrimaryGeneratedColumn()
     id: number;
@@ -12,8 +12,11 @@ export class Summary {
     summary : string;
 
     @Column('longtext')
-    original : string;
+    original_text : string;
 
     @CreateDateColumn()
     created_at : Date;
+
+    @Column({ default : 0})
+    view_count : number;
 }
