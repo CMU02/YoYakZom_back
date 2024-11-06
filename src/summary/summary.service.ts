@@ -46,6 +46,21 @@ export class SummaryService {
         });
     }
 
+    findCategory(category : string) : Promise<RequestSummaryFindAll[] | null> {
+        return this.summaryRepository.find({ where: { category } }).then((summaries) => {
+            if (summaries.length > 0) {
+                return summaries.map((summary) => {
+                    const requestSummaryFindAll = new RequestSummaryFindAll();
+                    requestSummaryFindAll.toEntity(summary);
+
+                    return requestSummaryFindAll;
+                });
+            }
+
+            return null;
+        });
+    }
+
     /**
      * Summary 생성
      * @param requestSummary 

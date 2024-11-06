@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { SummaryService } from './summary.service';
 import { RequestCreateSummary } from './dto/requestCreateSummary.dto';
 
@@ -9,6 +9,11 @@ export class SummaryController {
     @Get()
     findAll() {
         return this.summaryService.findAll();
+    }
+
+    @Get('category')
+    findCategory(@Query() query: {category: string}) {
+        return this.summaryService.findCategory(query.category);
     }
 
     @Get('/:id')
