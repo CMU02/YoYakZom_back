@@ -1,0 +1,70 @@
+name: Deploy YoYakZom API
+
+on:
+  push:
+  pull_request:
+    branches:
+      - main  # main 브랜치에 푸시될 때마다 실행
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4.2.2
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4.1.0
+        with:
+          node-version: '17'  # 프로젝트에 맞는 Node.js 버전 지정
+
+      - name: dependency install
+        run: npm install
+
+      - name: application build
+        run: npm run build
+
+      - name: sshpass install
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Deploy via SSH connection with password
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
+        run: |
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no $SSH_USERNAME@$SSH_HOST "
+            # 프로젝트 디렉토리로 이동하거나 존재하지 않으면 클론
+            if [ -d '/home/$SSH_USERNAME/yoyakzom' ]; then
+              cd /home/$SSH_USERNAME/yoyakzom && git pull origin main
+            else
+              git clone https://github.com/CMU02/YoYakZom_back.git /home/$SSH_USERNAME/yoyakzom
+              cd /home/$SSH_USERNAME/yoyakzom
+            fi
+
+            # 환경 변수 설정 (.env 파일 생성)
+            mkdir -p .env
+            echo 'DB_HOST=${DB_HOST}' > .env/.release.env
+            echo 'DB_PORT=${DB_PORT}' >> .env/.release.env
+            echo 'DB_USERNAME=${DB_USERNAME}' >> .env/.release.env
+            echo 'DB_PASSWORD=${DB_PASSWORD}' >> .env/.release.env
+            echo 'DB_SCHEMA=${DB_SCHEMA}' >> .env/.release.env
+
+            # 의존성 설치 및 빌드
+            npm install
+            npm run build
+
+            # PM2로 애플리케이션 실행 또는 재시작
+            pm2 describe yoyakzom > /dev/null
+            if [ $? -eq 0 ]; then
+              pm2 restart yoyakzom
+            else
+              pm2 start dist/main.js --name yoyakzom
+            fi
+          "
