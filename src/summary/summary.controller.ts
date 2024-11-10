@@ -16,6 +16,11 @@ export class SummaryController {
         return this.summaryService.findCategory(query.category);
     }
 
+    @Get('category-group')
+    findCategoryGroup() {
+        return this.summaryService.groupByCategory();
+    }
+
     @Get('/:id')
     findOne(@Param('id') id : number) {
         return this.summaryService.findOne(id);
