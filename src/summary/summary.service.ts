@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { RequestSummaryFindAll } from './dto/requestSummaryFindAll.dto';
 import { RequestSummaryFindOne } from './dto/requestSummaryFindOne.dto';
 import { RequestCreateSummary } from './dto/requestCreateSummary.dto';
+import { RequestCategoryGroup } from './dto/requestCategoryGroup.dto';
 
 @Injectable()
 export class SummaryService {
@@ -15,6 +16,7 @@ export class SummaryService {
 
     /**
      * Summary 리스트 조회
+     * @link localhost:7002/summary
      */
     findAll(): Promise<RequestSummaryFindAll[]> {
         return this.summaryRepository.find().then((summaries) => {
@@ -30,6 +32,7 @@ export class SummaryService {
     /**
      * 특정 Summary 조회 및 조회수 증가
      * @param id 
+     * @link localhost:7002/summary/1
      */
     async findOne(id : number): Promise<RequestSummaryFindOne | null> {
         await this.summaryRepository.increment({ id }, 'view_count', 1); // 조회수 증가
@@ -46,6 +49,12 @@ export class SummaryService {
         });
     }
 
+    /**
+     * 해당 카테고리 글 전체 찾기
+     * @link localhost:7002/summary/category?category=IT
+     * @param category 
+     * @returns RequestSummaryFindAll[] if summaries are found, or null if not
+     */
     findCategory(category : string) : Promise<RequestSummaryFindAll[] | null> {
         return this.summaryRepository.find({ where: { category } }).then((summaries) => {
             if (summaries.length > 0) {
@@ -62,8 +71,34 @@ export class SummaryService {
     }
 
     /**
+     * 그룹별 카테고리 및 카테고리별 카운트 조회
+     * @link localhost:7002/summary/category-group
+     * @returns RequestCategoryGroup[] if summaries are found, or null if not
+     */
+
+    groupByCategory() : Promise<RequestCategoryGroup[] | null> {
+        return this.summaryRepository.createQueryBuilder()
+            .select("category")
+            .addSelect("COUNT(*) as count")
+            .groupBy("category")
+            .getRawMany().then((result) => {
+                if (result.length > 0) {
+                    return result.map((summary) => {
+                        const requestCategoryGroup = new RequestCategoryGroup();
+                        requestCategoryGroup.toEntity(summary, summary.count);
+
+                        return requestCategoryGroup;
+                    });
+                }
+
+                return null;
+            });
+    } 
+
+    /**
      * Summary 생성
      * @param requestSummary 
+     * @link PostMethod localhost:7002/summary
      * @returns RequestSummaryFindOne
      */
     create(requestSummary : RequestCreateSummary) : Promise<RequestSummaryFindOne> {
