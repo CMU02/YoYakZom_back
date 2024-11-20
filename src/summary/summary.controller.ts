@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { SummaryService } from './summary.service';
 import { RequestCreateSummary } from './dto/requestCreateSummary.dto';
+import { PagedResponse } from './dto/pagedResponse.dto';
+import { RequestSummaryFindAll } from './dto/requestSummaryFindAll.dto';
 
 @Controller('summary')
 export class SummaryController {
@@ -9,6 +11,21 @@ export class SummaryController {
     @Get()
     findAll() {
         return this.summaryService.findAll();
+    }
+
+    @Get('/page')
+    async findAllPages(
+        @Query('page') page : number = 1, // default 1
+        @Query('pagesize') pagesize : number = 10 // default 10
+    ) : Promise<PagedResponse<RequestSummaryFindAll>> {
+        const { data, total } = await this.summaryService.findAllPage(page, pagesize);
+
+        return {
+            summaries : data,
+            total,
+            page,
+            pageSize : pagesize
+        }
     }
 
     @Get('category')

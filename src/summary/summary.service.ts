@@ -29,6 +29,27 @@ export class SummaryService {
         });
     }
 
+    findAllPage(page : number, pagesize : number) : Promise<{ data : RequestSummaryFindAll[]; total : number}> {
+        // 페이징 조건 설정
+        const skip = (page - 1) * pagesize; // 건너뛸 데이터 수
+        const take = pagesize; // 가져올 데이터 수
+
+        return this.summaryRepository.findAndCount({
+            skip,
+            take,
+        }).then(([summaries, total]) => {
+            const data = summaries.map((summary) => {
+                const requestSummaryAll = new RequestSummaryFindAll();
+                requestSummaryAll.toEntity(summary);
+                return requestSummaryAll;
+            })
+
+            return { data, total };
+        })
+    }
+
+
+
     /**
      * 특정 Summary 조회 및 조회수 증가
      * @param id 
