@@ -19,7 +19,11 @@ export class SummaryService {
      * @link localhost:7002/summary
      */
     findAll(): Promise<RequestSummaryFindAll[]> {
-        return this.summaryRepository.find().then((summaries) => {
+        return this.summaryRepository.find({
+            order: {
+                created_at: 'desc' // 생성날짜부터 내림차순 정렬
+            }
+        }).then((summaries) => {
             return summaries.map((summary) => {
                 const requestSummaryAll = new RequestSummaryFindAll();
                 requestSummaryAll.toEntity(summary);
